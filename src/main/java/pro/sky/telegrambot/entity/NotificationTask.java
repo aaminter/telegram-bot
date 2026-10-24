@@ -26,6 +26,9 @@ public class NotificationTask {
     @Column(name = "date_time", nullable = false)
     private LocalDateTime dateTime;
 
+    @Column(name = "sent", nullable = false)
+    private boolean sent = false;
+
     public NotificationTask() {
     }
 
@@ -65,5 +68,12 @@ public class NotificationTask {
 
     public void setDateTime(LocalDateTime dateTime) {
         this.dateTime = dateTime;
+    }
+    public boolean isSent() {
+        return sent;
+    }
+
+    public void setSent(boolean sent) {
+        this.sent = sent;
     }
 }

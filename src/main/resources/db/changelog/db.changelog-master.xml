@@ -24,4 +24,12 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="002-add-sent-to-notification-task" author="coursework">
+        <addColumn tableName="notification_task">
+            <column name="sent" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
