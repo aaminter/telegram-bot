@@ -28,7 +28,7 @@ class ReminderSchedulerServiceTest {
     @Test
     void shouldNotSendMessagesWhenNoRemindersAreDue() {
         when(notificationTaskRepository
-                .findByStatusAndSentFalseAndDateTimeLessThanEqual(
+                .findByStatusAndSentFalseAndDateTime(
                         eq("PENDING"),
                         any()
                 ))
