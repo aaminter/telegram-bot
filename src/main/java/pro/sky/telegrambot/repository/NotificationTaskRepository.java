@@ -16,13 +16,17 @@ public interface NotificationTaskRepository
     List<NotificationTask> findByStatusAndSentFalseAndDateTimeLessThanEqual(
             String status,
             LocalDateTime dateTime
-    );
+    );й
+
 
     @Transactional
     @Modifying
     @Query("UPDATE NotificationTask t SET t.status = 'PROCESSING', " +
             "t.processingStartedAt = :startedAt " +
-            "WHERE t.id = :id AND t.status = 'PENDING' AND t.sent = false")
+            "WHERE t.id = :id " +
+            "AND t.status = 'PENDING' " +
+            "AND t.sent = false " +
+            "AND t.dateTime <= :startedAt")
     int claimTask(
             @Param("id") Long id,
             @Param("startedAt") LocalDateTime startedAt
