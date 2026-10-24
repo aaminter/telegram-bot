@@ -29,6 +29,12 @@ public class NotificationTask {
     @Column(name = "sent", nullable = false)
     private boolean sent = false;
 
+    @Column(name = "status", nullable = false, length = 20)
+    private String status = "PENDING";
+
+    @Column(name = "processing_started_at")
+    private LocalDateTime processingStartedAt;
+
     public NotificationTask() {
     }
 
@@ -75,5 +81,21 @@ public class NotificationTask {
 
     public void setSent(boolean sent) {
         this.sent = sent;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getProcessingStartedAt() {
+        return processingStartedAt;
+    }
+
+    public void setProcessingStartedAt(LocalDateTime processingStartedAt) {
+        this.processingStartedAt = processingStartedAt;
     }
 }

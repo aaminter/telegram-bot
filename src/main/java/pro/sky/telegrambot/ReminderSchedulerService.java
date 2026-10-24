@@ -33,13 +33,36 @@ public class ReminderSchedulerService {
 
     @Scheduled(fixedRate = 10000)
     public void checkReminders() {
+        LocalDateTime now = LocalDateTime.now();
+
+        int resetCount = notificationTaskRepository.resetStaleProcessing(
+                now.minusMinutes(5)
+        );
+
+        if (resetCount > 0) {
+            logger.warn(
+                    "Reset {} stale reminder tasks",
+                    resetCount
+            );
+        }
+
         List<NotificationTask> tasks =
                 notificationTaskRepository
-                        .findBySentFalseAndDateTimeLessThanEqual(
-                                LocalDateTime.now()
+                        .findByStatusAndSentFalseAndDateTimeLessThanEqual(
+                                "PENDING",
+                                now
                         );
 
         for (NotificationTask task : tasks) {
+            int claimed = notificationTaskRepository.claimTask(
+                    task.getId(),
+                    now
+            );
+
+            if (claimed == 0) {
+                continue;
+            }
+
             try {
                 SendResponse response = telegramBot.execute(
                         new SendMessage(
@@ -49,9 +72,23 @@ public class ReminderSchedulerService {
                 );
 
                 if (response.isOk()) {
-                    markTaskAsSent(task.getId());
-                    logger.info("Reminder {} sent successfully", task.getId());
+                    int updated = notificationTaskRepository
+                            .markAsSentSuccessfully(task.getId());
+
+                    if (updated == 1) {
+                        logger.info(
+                                "Reminder {} sent successfully",
+                                task.getId()
+                        );
+                    } else {
+                        logger.error(
+                                "Reminder {} was sent, but its status was not updated",
+                                task.getId()
+                        );
+                    }
                 } else {
+                    notificationTaskRepository.releaseTask(task.getId());
+
                     logger.warn(
                             "Failed to send reminder {}. Telegram error: {}",
                             task.getId(),
@@ -59,6 +96,8 @@ public class ReminderSchedulerService {
                     );
                 }
             } catch (Exception exception) {
+                notificationTaskRepository.releaseTask(task.getId());
+
                 logger.error(
                         "Error while sending reminder {}",
                         task.getId(),
@@ -66,8 +105,5 @@ public class ReminderSchedulerService {
                 );
             }
         }
-    }
-    public void markTaskAsSent(Long id) {
-        notificationTaskRepository.markAsSent(id);
     }
 }
