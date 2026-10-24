@@ -16,7 +16,7 @@ public interface NotificationTaskRepository
     List<NotificationTask> findByStatusAndSentFalseAndDateTimeLessThanEqual(
             String status,
             LocalDateTime dateTime
-    );й
+    );
 
 
     @Transactional
