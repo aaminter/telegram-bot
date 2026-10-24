@@ -31,7 +31,7 @@ public class ReminderSchedulerService {
         this.telegramBot = telegramBot;
     }
 
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(cron = "0 0/1 * * * *")
     public void checkReminders() {
         LocalDateTime now = LocalDateTime.now();
 
