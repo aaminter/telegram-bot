@@ -1,0 +1,8 @@
+target/
+.idea/
+*.iml
+.env
+**/application-local.properties
+.DS_Store
+__MACOSX/
+._*
