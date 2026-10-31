@@ -24,4 +24,21 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="002-add-sent-to-notification-task" author="coursework">
+        <addColumn tableName="notification_task">
+            <column name="sent" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="003-add-processing-status" author="coursework">
+        <addColumn tableName="notification_task">
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processing_started_at" type="TIMESTAMP WITHOUT TIME ZONE"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
