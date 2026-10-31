@@ -13,6 +13,25 @@ jobs:
   build:
     name: Build and test (Java 11)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: telegram_bot
+          POSTGRES_USER: telegram_bot_user
+          POSTGRES_PASSWORD: ci_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U telegram_bot_user -d telegram_bot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/telegram_bot
+      DB_USERNAME: telegram_bot_user
+      DB_PASSWORD: ci_test_password
+      TELEGRAM_BOT_TOKEN: ci-test-token
     steps:
       - name: Checkout
         uses: actions/checkout@v4
