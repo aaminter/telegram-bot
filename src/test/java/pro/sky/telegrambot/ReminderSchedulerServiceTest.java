@@ -1,4 +1,3 @@
-
 package pro.sky.telegrambot;
 
 import com.pengrad.telegrambot.TelegramBot;
@@ -17,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -35,12 +33,9 @@ class ReminderSchedulerServiceTest {
 
     @Test
     void shouldNotSendMessagesWhenNoRemindersAreDue() {
-        when(notificationTaskRepository
-                .findByStatusAndSentFalseAndDateTime(
-                        eq("PENDING"),
-                        any(LocalDateTime.class)
-                ))
-                .thenReturn(Collections.emptyList());
+        when(notificationTaskRepository.findByStatusAndSentFalseAndDateTimeLessThanEqual(
+                eq("PENDING"), any(LocalDateTime.class)
+        )).thenReturn(Collections.emptyList());
 
         reminderSchedulerService.checkReminders();
 
@@ -48,42 +43,83 @@ class ReminderSchedulerServiceTest {
     }
 
     @Test
-    void shouldSendDueReminderAndMarkItAsSent() {
-        NotificationTask task = new NotificationTask(
-                123456789L,
-                "Проверить курсовую",
-                LocalDateTime.now().withSecond(0).withNano(0)
-        );
-        task.setId(1L);
+    void shouldSendOverdueReminderAndMarkItAsSent() {
+        NotificationTask task = createTask(LocalDateTime.now().minusHours(2));
 
-        when(notificationTaskRepository.resetStaleProcessing(
-                any(LocalDateTime.class)
-        )).thenReturn(0);
-
-        when(notificationTaskRepository
-                .findByStatusAndSentFalseAndDateTime(
-                        eq("PENDING"),
-                        any(LocalDateTime.class)
-                ))
-                .thenReturn(List.of(task));
-
-        when(notificationTaskRepository.claimTask(
-                eq(1L),
-                any(LocalDateTime.class)
-        )).thenReturn(1);
+        when(notificationTaskRepository.findByStatusAndSentFalseAndDateTimeLessThanEqual(
+                eq("PENDING"), any(LocalDateTime.class)
+        )).thenReturn(List.of(task));
+        when(notificationTaskRepository.claimTask(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(1);
 
         SendResponse response = mock(SendResponse.class);
-        when(telegramBot.execute(any(SendMessage.class)))
-                .thenReturn(response);
+        when(telegramBot.execute(any(SendMessage.class))).thenReturn(response);
         when(response.isOk()).thenReturn(true);
-
-        when(notificationTaskRepository.markAsSentSuccessfully(1L))
-                .thenReturn(1);
+        when(notificationTaskRepository.markAsSentSuccessfully(1L)).thenReturn(1);
 
         reminderSchedulerService.checkReminders();
 
         verify(telegramBot).execute(any(SendMessage.class));
         verify(notificationTaskRepository).markAsSentSuccessfully(1L);
         verify(notificationTaskRepository, never()).releaseTask(1L);
+    }
+
+    @Test
+    void shouldReleaseTaskWhenTelegramReturnsFailure() {
+        NotificationTask task = createTask(LocalDateTime.now().minusMinutes(10));
+
+        when(notificationTaskRepository.findByStatusAndSentFalseAndDateTimeLessThanEqual(
+                eq("PENDING"), any(LocalDateTime.class)
+        )).thenReturn(List.of(task));
+        when(notificationTaskRepository.claimTask(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(1);
+
+        SendResponse response = mock(SendResponse.class);
+        when(telegramBot.execute(any(SendMessage.class))).thenReturn(response);
+        when(response.isOk()).thenReturn(false);
+
+        reminderSchedulerService.checkReminders();
+
+        verify(notificationTaskRepository).releaseTask(1L);
+        verify(notificationTaskRepository, never()).markAsSentSuccessfully(1L);
+    }
+
+    @Test
+    void shouldReleaseTaskWhenTelegramCallThrows() {
+        NotificationTask task = createTask(LocalDateTime.now().minusMinutes(10));
+
+        when(notificationTaskRepository.findByStatusAndSentFalseAndDateTimeLessThanEqual(
+                eq("PENDING"), any(LocalDateTime.class)
+        )).thenReturn(List.of(task));
+        when(notificationTaskRepository.claimTask(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(1);
+        when(telegramBot.execute(any(SendMessage.class)))
+                .thenThrow(new RuntimeException("simulated transport failure"));
+
+        reminderSchedulerService.checkReminders();
+
+        verify(notificationTaskRepository).releaseTask(1L);
+        verify(notificationTaskRepository, never()).markAsSentSuccessfully(1L);
+    }
+
+    @Test
+    void shouldSkipTaskAlreadyClaimedByAnotherWorker() {
+        NotificationTask task = createTask(LocalDateTime.now().minusMinutes(10));
+
+        when(notificationTaskRepository.findByStatusAndSentFalseAndDateTimeLessThanEqual(
+                eq("PENDING"), any(LocalDateTime.class)
+        )).thenReturn(List.of(task));
+        when(notificationTaskRepository.claimTask(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(0);
+
+        reminderSchedulerService.checkReminders();
+
+        verify(telegramBot, never()).execute(any(SendMessage.class));
+    }
+
+    private NotificationTask createTask(LocalDateTime dateTime) {
+        NotificationTask task = new NotificationTask(123456789L, "Check task", dateTime);
+        task.setId(1L);
+        return task;
     }
 }
