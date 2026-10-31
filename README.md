@@ -1,5 +1,9 @@
 # Telegram Bot
 
+![Java CI](https://github.com/aaminter/telegram-bot/actions/workflows/ci.yml/badge.svg)
+
+Учебный backend-проект на Java и Spring Boot. Репозиторий демонстрирует работу с Telegram Bot API, PostgreSQL, Liquibase и планированием фоновых задач.
+
 Учебный backend-проект на Java и Spring Boot. Репозиторий демонстрирует работу с Telegram Bot API, PostgreSQL, Liquibase и планированием фоновых задач.
 
 > Статус: учебный проект в развитии. Описание фиксирует назначение и техническую основу репозитория; функциональность следует считать реализованной только в той мере, в какой она подтверждена исходным кодом и тестами.
