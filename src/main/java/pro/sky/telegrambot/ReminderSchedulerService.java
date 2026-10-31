@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.entity.NotificationTask;
 import pro.sky.telegrambot.repository.NotificationTaskRepository;
-import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,8 +33,7 @@ public class ReminderSchedulerService {
     @Scheduled(cron = "0 0/1 * * * *")
     public void checkReminders() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime currentMinute = now.truncatedTo(ChronoUnit.MINUTES);
-        int resetCount = notificationTaskRepository.resetStaleProcessing(
+                int resetCount = notificationTaskRepository.resetStaleProcessing(
                 now.minusMinutes(5)
         );
 
@@ -48,9 +46,9 @@ public class ReminderSchedulerService {
 
         List<NotificationTask> tasks =
                 notificationTaskRepository
-                        .findByStatusAndSentFalseAndDateTime(
+                        .findByStatusAndSentFalseAndDateTimeLessThanEqual(
                                 "PENDING",
-                                currentMinute
+                                now
                         );
 
         for (NotificationTask task : tasks) {
