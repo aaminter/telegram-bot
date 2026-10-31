@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface NotificationTaskRepository
         extends JpaRepository<NotificationTask, Long> {
 
-    List<NotificationTask> findByStatusAndSentFalseAndDateTime(
+    List<NotificationTask> findByStatusAndSentFalseAndDateTimeLessThanEqual(
             String status,
             LocalDateTime dateTime
     );
